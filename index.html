@@ -1,142 +1,195 @@
 <!DOCTYPE html>
 <html ng-app="todoApp">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <title>AngularJS To-Do Lista - BEM CSS</title>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&family=Poppins:wght@600&display=swap"
-        rel="stylesheet" />
-
+    <link
+      href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Indie+Flower&family=Poppins:wght@600&display=swap"
+      rel="stylesheet"
+    />
 
     <link rel="stylesheet" href="style.css" />
-</head>
+  </head>
 
-<body ng-controller="TodoController">
+  <body ng-controller="TodoController">
     <div class="todo">
-        <h2 class="todo__header">To-Do List</h2>
+      <h2 class="todo__header">To-Do List</h2>
 
-        <div class="todo__input-group">
-            <input type="text" ng-model="newTask" placeholder="New task..." class="todo__input"
-                ng-keydown="$event.key === 'Enter' && addTask()" />
-            <button ng-click="addTask()" class="todo__button">Add ➕ </button>
-        </div>
+      <div class="todo__input-group">
+        <input
+          type="text"
+          ng-model="newTask"
+          placeholder="New task..."
+          class="todo__input"
+          ng-keydown="$event.key === 'Enter' && addTask()"
+        />
+        <button ng-click="addTask()" class="todo__button">Add ➕</button>
+      </div>
 
-        <div class="todo__filters" style="margin-bottom:15px;">
-            <button ng-click="setFilter('all')" ng-class="{ 'active': filterStatus === 'all' }" class="todo__button"
-                style="margin-right:5px;"> All</button>
-            <button ng-click="setFilter('active')" ng-class="{ 'active': filterStatus === 'active' }"
-                class="todo__button" style="margin-right:5px;">Active</button>
-            <button ng-click="setFilter('done')" ng-class="{ 'active': filterStatus === 'done' }"
-                class="todo__button">Done</button>
-        </div>
+      <div class="todo__filters" style="margin-bottom: 15px">
+        <button
+          ng-click="setFilter('all')"
+          ng-class="{ 'active': filterStatus === 'all' }"
+          class="todo__button"
+          style="margin-right: 5px"
+        >
+          All
+        </button>
+        <button
+          ng-click="setFilter('active')"
+          ng-class="{ 'active': filterStatus === 'active' }"
+          class="todo__button"
+          style="margin-right: 5px"
+        >
+          Active
+        </button>
+        <button
+          ng-click="setFilter('done')"
+          ng-class="{ 'active': filterStatus === 'done' }"
+          class="todo__button"
+        >
+          Done
+        </button>
+      </div>
 
-        <ul class="todo__list">
-            <li class="todo__item" ng-repeat="task in filteredTasks() track by $index">
-                <span class="todo__priority" ng-class="task.priority" ng-click="togglePriority(task)">
-                </span>
+      <ul class="todo__list">
+        <li
+          class="todo__item"
+          ng-repeat="task in filteredTasks() track by $index"
+        >
+          <span
+            class="todo__priority"
+            ng-class="task.priority"
+            ng-click="togglePriority(task)"
+          >
+          </span>
 
-                <input type="checkbox" ng-model="task.done" class="todo__checkbox" ng-change="saveTasks()" />
+          <input
+            type="checkbox"
+            ng-model="task.done"
+            class="todo__checkbox"
+            ng-change="saveTasks()"
+          />
 
+          <span
+            ng-dblclick="startEdit($index)"
+            ng-hide="editingIndex === $index"
+            ng-class="{ 'todo__task': true, 'todo__task--done': task.done }"
+          >
+            {{ task.name }}
+          </span>
 
-                <span ng-dblclick="startEdit($index)" ng-hide="editingIndex === $index"
-                    ng-class="{ 'todo__task': true, 'todo__task--done': task.done }">
-                    {{ task.name }}
-                </span>
+          <input
+            ng-show="editingIndex === $index"
+            ng-model="editedTaskName"
+            ng-blur="saveEdit($index)"
+            ng-keydown="$event.key === 'Enter' && saveEdit($index)"
+            autofocus
+            class="todo__edit-input"
+          />
 
-                <input ng-show="editingIndex === $index" ng-model="editedTaskName" ng-blur="saveEdit($index)"
-                    ng-keydown="$event.key === 'Enter' && saveEdit($index)" autofocus class="todo__edit-input" />
-
-                <button ng-click="removeTask($index)" class="todo__remove-button" title="Törlés">❌</button>
-            </li>
-        </ul>
+          <button
+            ng-click="removeTask($index)"
+            class="todo__remove-button"
+            title="Törlés"
+          >
+            ❌
+          </button>
+        </li>
+      </ul>
     </div>
 
     <script>
-        angular.module('todoApp', []).controller('TodoController', function ($scope) {
-            const STORAGE_KEY = 'my-angularjs-tasks';
-            $scope.tasks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-            $scope.newTask = '';
-            $scope.filterStatus = 'all';
-            $scope.editingIndex = null;
-            $scope.editedTaskName = '';
+      angular
+        .module("todoApp", [])
+        .controller("TodoController", function ($scope) {
+          const STORAGE_KEY = "my-angularjs-tasks";
+          $scope.tasks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+          $scope.newTask = "";
+          $scope.filterStatus = "all";
+          $scope.editingIndex = null;
+          $scope.editedTaskName = "";
 
-            $scope.addTask = function () {
-                const name = $scope.newTask.trim();
-                if (name) {
-                    $scope.tasks.push({ name, done: false });
-                    $scope.newTask = '';
-                    saveTasks();
-                }
-            };
-
-            $scope.removeTask = function (index) {
-                $scope.tasks.splice(index, 1);
-                saveTasks();
-            };
-
-            $scope.filteredTasks = function () {
-                let filtered = $scope.tasks.filter((task) => {
-                    if ($scope.filterStatus === 'active') return !task.done;
-                    if ($scope.filterStatus === 'done') return task.done;
-                    return true;
-                });
-
-                // Prioritás sorrend: high > medium > low
-                const priorityOrder = { high: 3, medium: 2, low: 1 };
-
-                filtered.sort((a, b) => {
-                    return priorityOrder[b.priority] - priorityOrder[a.priority];
-                });
-
-                return filtered;
-            };
-
-
-            $scope.togglePriority = function (task) {
-                if (task.priority === 'low') {
-                    task.priority = 'medium';
-                } else if (task.priority === 'medium') {
-                    task.priority = 'high';
-                } else {
-                    task.priority = 'low';
-                }
-                $scope.saveTasks();
-            };
-
-
-            $scope.startEdit = function (index) {
-                $scope.editingIndex = index;
-                $scope.editedTaskName = $scope.tasks[index].name;
-            };
-
-            $scope.addTask = function () {
-                const name = $scope.newTask.trim();
-                if (name) {
-                    $scope.tasks.push({ name, done: false, priority: 'medium' });
-                    $scope.newTask = '';
-                    saveTasks();
-                }
-            };
-
-            $scope.saveEdit = function (index) {
-                const name = $scope.editedTaskName.trim();
-                if (name) {
-                    $scope.tasks[index].name = name;
-                    $scope.editingIndex = null;
-                    $scope.editedTaskName = '';
-                    saveTasks();
-                }
-            };
-
-            function saveTasks() {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify($scope.tasks));
+          $scope.addTask = function () {
+            const name = $scope.newTask.trim();
+            if (name) {
+              $scope.tasks.push({ name, done: false });
+              $scope.newTask = "";
+              saveTasks();
             }
+          };
 
-            $scope.saveTasks = saveTasks;
+          $scope.removeTask = function (index) {
+            $scope.tasks.splice(index, 1);
+            saveTasks();
+          };
+
+          $scope.filteredTasks = function () {
+            let filtered = $scope.tasks.filter((task) => {
+              if ($scope.filterStatus === "active") return !task.done;
+              if ($scope.filterStatus === "done") return task.done;
+              return true;
+            });
+
+            // Prioritás sorrend: high > medium > low
+            const priorityOrder = { high: 3, medium: 2, low: 1 };
+
+            filtered.sort((a, b) => {
+              return priorityOrder[b.priority] - priorityOrder[a.priority];
+            });
+
+            return filtered;
+          };
+
+          $scope.togglePriority = function (task) {
+            if (task.priority === "low") {
+              task.priority = "medium";
+            } else if (task.priority === "medium") {
+              task.priority = "high";
+            } else {
+              task.priority = "low";
+            }
+            $scope.saveTasks();
+          };
+
+          $scope.startEdit = function (index) {
+            $scope.editingIndex = index;
+            $scope.editedTaskName = $scope.tasks[index].name;
+          };
+
+          $scope.addTask = function () {
+            const name = $scope.newTask.trim();
+            if (name) {
+              $scope.tasks.push({ name, done: false, priority: "medium" });
+              $scope.newTask = "";
+              saveTasks();
+            }
+          };
+          $scope.setFilter = function (status) {
+            $scope.filterStatus = status;
+          };
+
+          $scope.saveEdit = function (index) {
+            const name = $scope.editedTaskName.trim();
+            if (name) {
+              $scope.tasks[index].name = name;
+              $scope.editingIndex = null;
+              $scope.editedTaskName = "";
+              saveTasks();
+            }
+          };
+
+          function saveTasks() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify($scope.tasks));
+          }
+
+          $scope.saveTasks = saveTasks;
         });
     </script>
-</body>
-
+  </body>
 </html>
